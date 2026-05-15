@@ -250,13 +250,32 @@ clone_repository() {
     local site_path="$3"
     local username="$4"
     print_title "Cloning repository"
+    
     mkdir -p "/home/$username/.ssh"
-    ssh-keygen -t ed25519 -f "/home/$username/.ssh/id_ed25519" -N "" -q
+    if [[ ! -f "/home/$username/.ssh/id_ed25519" ]]; then
+        ssh-keygen -t ed25519 -f "/home/$username/.ssh/id_ed25519" -N "" -q
+    fi
+    ssh-keyscan -t rsa github.com >> "/home/$username/.ssh/known_hosts" 2>/dev/null
     chown -R "$username":"$username" "/home/$username/.ssh"
+    chmod 700 "/home/$username/.ssh"
+    chmod 600 "/home/$username/.ssh/id_ed25519" "/home/$username/.ssh/known_hosts" 2>/dev/null || true
+    
+    if [[ "$repo_url" == git@* ]]; then
+        echo -e "\n  ${YELLOW}⚠️  SSH Repository Detected${NC}"
+        echo -e "  Please add this Deploy Key to your GitHub repository:\n"
+        echo -e "${CYAN}$(cat /home/$username/.ssh/id_ed25519.pub)${NC}\n"
+        ask_input "Press [ENTER] after you have added the key to GitHub..." "" >/dev/null
+    fi
+    
     local release_id=$(date +%Y%m%d_%H%M%S)
     local release_dir="$site_path/releases/$release_id"
-    sudo -u "$username" git clone "$repo_url" "$release_dir"
-    sudo -u "$username" git -C "$release_dir" checkout "$branch"
+    
+    if ! sudo -u "$username" git clone "$repo_url" "$release_dir"; then
+        print_error "Failed to clone repository. Please verify your SSH key and repository URL."
+        return 1
+    fi
+    
+    sudo -u "$username" git -C "$release_dir" checkout "$branch" 2>/dev/null || print_warning "Branch $branch not found, using default branch."
     ln -sfn "$site_path/shared/storage" "$release_dir/storage"
     ln -sfn "$release_dir" "$site_path/current"
     print_success "Repository cloned"
