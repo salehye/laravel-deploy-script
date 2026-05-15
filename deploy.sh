@@ -362,18 +362,14 @@ EOF
 setup_nginx() {
     local project_name="$1"
     shift
-    local domains=("$@")
-    local site_path="${domains[-1]}"   # placeholder, will be overridden later
-    local php_version="${domains[-2]}"
-    local username="${domains[-1]}"
-    # The above is just to keep compatibility with older call signatures; we will recompute properly
-    # Re‑extract arguments
-    local domain_list=("${@:1:$#-4}")
+    # After shift, $@ contains: domain1 [domain2...] site_path php_version username
+    local domain_list=("${@:1:$#-3}")
     local site_path="${@: -3:1}"
     local php_version="${@: -2:1}"
     local username="${@: -1}"
     print_title "Configuring Nginx"
-    local server_names=$(printf "%s " "${domain_list[@]}" "www.${domain_list[@]}")
+    local server_names=$(printf "%s " "${domain_list[@]}" | sed 's/ $//')
+    server_names+=" $(printf "www.%s " "${domain_list[@]}" | sed 's/ $//')"
     cat > "/etc/nginx/sites-available/$project_name" <<EOF
 server {
     listen 80;
