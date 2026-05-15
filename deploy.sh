@@ -548,38 +548,39 @@ create_deploy_script() {
     local project_name="$1"
     local site_path="$2"
     print_title "Creating fast‑deploy helper script"
-    cat > "/usr/local/bin/deploy-$project_name" <<'DEPLOYSCRIPT'
+    cat > "/usr/local/bin/deploy-$project_name" <<DEPLOYSCRIPT
 #!/bin/bash
-PROJECT_NAME="$1"
-SITE_PATH="/var/www/$PROJECT_NAME"
-PROJECT_USER=$(stat -c '%U' "$SITE_PATH/current" 2>/dev/null || echo "www-data")
-RELEASE_ID=$(date +%Y%m%d_%H%M%S)
-RELEASE_PATH="$SITE_PATH/releases/$RELEASE_ID"
+PROJECT_NAME="$project_name"
+SITE_PATH="$site_path"
+PROJECT_USER=\$(stat -c '%U' "\$SITE_PATH/current" 2>/dev/null || echo "www-data")
+RELEASE_ID=\$(date +%Y%m%d_%H%M%S)
+RELEASE_PATH="\$SITE_PATH/releases/\$RELEASE_ID"
 
-if [ ! -d "$SITE_PATH/current/.git" ]; then
+if [ ! -d "\$SITE_PATH/current/.git" ]; then
     echo "❌ Project is not a git repository"
     exit 1
 fi
 
-sudo -u "$PROJECT_USER" git clone "$(sudo -u "$PROJECT_USER" git -C "$SITE_PATH/current" config --get remote.origin.url)" "$RELEASE_PATH"
-sudo -u "$PROJECT_USER" git -C "$RELEASE_PATH" checkout "$(sudo -u "$PROJECT_USER" git -C "$SITE_PATH/current" rev-parse --abbrev-ref HEAD)"
-ln -sfn "$SITE_PATH/shared/storage" "$RELEASE_PATH/storage"
-ln -sfn "$SITE_PATH/shared/.env" "$RELEASE_PATH/.env"
-cd "$RELEASE_PATH"
-sudo -u "$PROJECT_USER" composer install --no-interaction --optimize-autoloader --no-dev
-sudo -u "$PROJECT_USER" php artisan migrate --force
-sudo -u "$PROJECT_USER" php artisan config:cache
-sudo -u "$PROJECT_USER" php artisan route:cache
-sudo -u "$PROJECT_USER" php artisan view:cache
-ln -sfn "$RELEASE_PATH" "$SITE_PATH/current.next"
-mv -T "$SITE_PATH/current.next" "$SITE_PATH/current"
-PHP_VERSION=$(php -r "echo PHP_VERSION;" | cut -d. -f1,2)
-sudo systemctl reload "php${PHP_VERSION}-fpm"
-cd "$SITE_PATH/releases" && ls -t | tail -n +6 | xargs -r rm -rf
-echo "✅ Deployment of $PROJECT_NAME completed"
+sudo -u "\$PROJECT_USER" git clone "\$(sudo -u "\$PROJECT_USER" git -C "\$SITE_PATH/current" config --get remote.origin.url)" "\$RELEASE_PATH"
+sudo -u "\$PROJECT_USER" git -C "\$RELEASE_PATH" checkout "\$(sudo -u "\$PROJECT_USER" git -C "\$SITE_PATH/current" rev-parse --abbrev-ref HEAD)"
+ln -sfn "\$SITE_PATH/shared/storage" "\$RELEASE_PATH/storage"
+ln -sfn "\$SITE_PATH/shared/.env" "\$RELEASE_PATH/.env"
+cd "\$RELEASE_PATH"
+sudo -u "\$PROJECT_USER" composer install --no-interaction --optimize-autoloader --no-dev
+sudo -u "\$PROJECT_USER" php artisan migrate --force
+sudo -u "\$PROJECT_USER" php artisan config:cache
+sudo -u "\$PROJECT_USER" php artisan route:cache
+sudo -u "\$PROJECT_USER" php artisan view:cache
+ln -sfn "\$RELEASE_PATH" "\$SITE_PATH/current.next"
+mv -T "\$SITE_PATH/current.next" "\$SITE_PATH/current"
+PHP_VERSION=\$(php -r "echo PHP_VERSION;" | cut -d. -f1,2)
+sudo systemctl reload "php\${PHP_VERSION}-fpm"
+cd "\$SITE_PATH/releases" && ls -t | tail -n +6 | xargs -r rm -rf
+echo "✅ Deployment of \$PROJECT_NAME completed"
 DEPLOYSCRIPT
     chmod +x "/usr/local/bin/deploy-$project_name"
-    print_success "Deploy helper script created: deploy-$project_name"
+    echo "www-data ALL=(ALL) NOPASSWD: /usr/local/bin/deploy-$project_name" > "/etc/sudoers.d/deploy-$project_name"
+    print_success "Deployment script created at /usr/local/bin/deploy-$project_name"
 }
 
 # ============================================
