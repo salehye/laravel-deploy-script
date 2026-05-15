@@ -96,12 +96,12 @@ ask_input() {
     local default="$2"
     local answer
     if [[ -n "$default" ]]; then
-        echo -ne "  ${BLUE}📝${NC} $prompt [$default]: "
+        echo -ne "  ${BLUE}📝${NC} $prompt [$default]: " >&2
     else
-        echo -ne "  ${BLUE}📝${NC} $prompt: "
+        echo -ne "  ${BLUE}📝${NC} $prompt: " >&2
     fi
     read -r answer
-    answer=$(echo "$answer" | tr -d '\r' | xargs)  # Trim whitespace & carriage returns
+    answer=$(echo "$answer" | tr -d '\r' | xargs)
     echo "${answer:-$default}"
 }
 
