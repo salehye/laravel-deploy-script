@@ -328,7 +328,7 @@ install_composer_dependencies() {
         mv composer.phar /usr/local/bin/composer
         chmod +x /usr/local/bin/composer
     fi
-    sudo -u "$username" bash <<'EOF'
+    sudo -u "$username" bash <<EOF
 cd "$site_path/current"
 composer install --no-interaction --optimize-autoloader --no-dev
 php artisan key:generate
