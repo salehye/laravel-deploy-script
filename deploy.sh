@@ -170,9 +170,10 @@ install_php() {
     print_title "Installing PHP $version"
     add-apt-repository ppa:ondrej/php -y
     apt update
-    local extensions="fpm cli common mysql zip gd mbstring curl xml bcmath tokenizer json redis"
+    # Note: json and tokenizer are built into php-common since PHP 8.0+
+    local extensions="fpm cli common mysql zip gd mbstring curl xml bcmath redis intl"
     for ext in $extensions; do
-        apt install -y "php${version}-${ext}"
+        apt install -y "php${version}-${ext}" 2>/dev/null || print_warning "php${version}-${ext} not available, skipping"
     done
     print_success "PHP $version installed"
 }
