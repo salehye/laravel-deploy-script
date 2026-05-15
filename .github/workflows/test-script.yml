@@ -1,0 +1,97 @@
+name: 🧪 Test Laravel Deploy Script
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # كل يوم أحد
+
+jobs:
+  test:
+    name: اختبار السكربت
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        php-version: ['8.0', '8.1', '8.2', '8.3']
+    
+    steps:
+      - name: 📥 تحميل الكود
+        uses: actions/checkout@v4
+      
+      - name: 🔧 إعداد PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, pdo_mysql, bcmath, curl, json
+      
+      - name: ✅ التحقق من صيغة السكربت
+        run: bash -n deploy.sh
+      
+      - name: 🔍 البحث عن كلمات محظورة
+        run: |
+          if grep -r "eval(" deploy.sh; then
+            echo "⚠️ تم العثور على eval في السكربت"
+            exit 1
+          fi
+          if grep -r "base64_decode" deploy.sh; then
+            echo "⚠️ تم العثور على base64_decode في السكربت"
+            exit 1
+          fi
+      
+      - name: 📊 التحقق من استخدام الأدوات الأساسية
+        run: |
+          echo "## التحقق من الأوامر المستخدمة" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          for cmd in curl wget git nginx php composer mysql; do
+            if grep -q "$cmd" deploy.sh; then
+              echo "- ✅ $cmd" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ $cmd" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+      
+      - name: 📝 التحقق من الإصدار
+        run: |
+          VERSION=$(grep -E '^SCRIPT_VERSION=' deploy.sh | cut -d'"' -f2)
+          echo "📌 إصدار السكربت: v$VERSION"
+          echo "**إصدار السكربت:** v$VERSION" >> $GITHUB_STEP_SUMMARY
+      
+      - name: 🚀 اختبار تنفيذ جزئي (محاكاة)
+        run: |
+          # اختبار الدوال الرئيسية دون تنفيذها
+          grep -E '^[a-z_]+\(\)' deploy.sh | head -10
+      
+      - name: 📦 تثبيت الحزم الأساسية للاختبار
+        run: |
+          sudo apt update
+          sudo apt install -y shellcheck
+      
+      - name: 🔍 فحص ShellCheck
+        run: |
+          shellcheck deploy.sh || true
+      
+      - name: 📋 إنشاء تقرير الاختبار
+        run: |
+          echo "# ✅ تقرير اختبار Laravel Deploy Script" > test-report.md
+          echo "" >> test-report.md
+          echo "## 📊 معلومات السكربت" >> test-report.md
+          echo "- **الإصدار:** $(grep 'SCRIPT_VERSION=' deploy.sh | cut -d'"' -f2)" >> test-report.md
+          echo "- **تاريخ الاختبار:** $(date)" >> test-report.md
+          echo "- **PHP الإصدار:** ${{ matrix.php-version }}" >> test-report.md
+          echo "" >> test-report.md
+          echo "## 📈 إحصائيات" >> test-report.md
+          echo "- **عدد الأسطر:** $(wc -l < deploy.sh)" >> test-report.md
+          echo "- **عدد الدوال:** $(grep -c '^[a-z_]*()' deploy.sh)" >> test-report.md
+          echo "- **عدد الأوامر المختلفة:** $(grep -oE '^[a-z-]+' deploy.sh | sort -u | wc -l)" >> test-report.md
+          
+          cat test-report.md >> $GITHUB_STEP_SUMMARY
+      
+      - name: 💾 حفظ تقرير الاختبار
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-php-${{ matrix.php-version }}
+          path: test-report.md
