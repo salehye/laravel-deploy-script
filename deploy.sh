@@ -234,6 +234,9 @@ deploy_new_project() {
     # جمع المعلومات
     while true; do
         PROJECT_NAME=$(ask_input "اسم المشروع (أحرف، أرقام، نقاط، شرطات فقط)" "")
+        # تنظيف أي مسافات زائدة
+        PROJECT_NAME=$(echo "$PROJECT_NAME" | xargs)
+        
         if [[ -z "$PROJECT_NAME" ]]; then
             print_error "اسم المشروع مطلوب"
         elif [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9.-]+$ ]]; then
@@ -248,6 +251,7 @@ deploy_new_project() {
     while true; do
         domain=$(ask_input "أدخل اسم النطاق (مثال: example.com) - اتركه فارغاً للإنهاء" "")
         [[ -z "$domain" ]] && break
+        domain=$(echo "$domain" | xargs)
         
         if [[ "$domain" =~ ^([a-zA-Z0-9](-*[a-zA-Z0-9])*\.)+[a-zA-Z]{2,}$ ]]; then
             DOMAINS+=("$domain")
