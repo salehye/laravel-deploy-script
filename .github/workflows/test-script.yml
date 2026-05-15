@@ -6,11 +6,11 @@ on:
   pull_request:
     branches: [ main ]
   schedule:
-    - cron: '0 0 * * 0'  # كل يوم أحد
+    - cron: '0 0 * * 0'  # Every Sunday
 
 jobs:
   test:
-    name: اختبار السكربت
+    name: Script Tests
     runs-on: ubuntu-latest
     
     strategy:
@@ -18,32 +18,32 @@ jobs:
         php-version: ['8.0', '8.1', '8.2', '8.3']
     
     steps:
-      - name: 📥 تحميل الكود
+      - name: 📥 Checkout Code
         uses: actions/checkout@v4
       
-      - name: 🔧 إعداد PHP
+      - name: 🔧 Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
           extensions: mbstring, pdo_mysql, bcmath, curl, json
       
-      - name: ✅ التحقق من صيغة السكربت
+      - name: ✅ Validate Script Syntax
         run: bash -n deploy.sh
       
-      - name: 🔍 البحث عن كلمات محظورة
+      - name: 🔍 Check for Banned Keywords
         run: |
           if grep -r "eval(" deploy.sh; then
-            echo "⚠️ تم العثور على eval في السكربت"
+            echo "⚠️ Found eval in script"
             exit 1
           fi
           if grep -r "base64_decode" deploy.sh; then
-            echo "⚠️ تم العثور على base64_decode في السكربت"
+            echo "⚠️ Found base64_decode in script"
             exit 1
           fi
       
-      - name: 📊 التحقق من استخدام الأدوات الأساسية
+      - name: 📊 Verify Core Tool Usage
         run: |
-          echo "## التحقق من الأوامر المستخدمة" >> $GITHUB_STEP_SUMMARY
+          echo "## Core Command Check" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           for cmd in curl wget git nginx php composer mysql; do
@@ -54,43 +54,43 @@ jobs:
             fi
           done
       
-      - name: 📝 التحقق من الإصدار
+      - name: 📝 Verify Version
         run: |
           VERSION=$(grep -E '^SCRIPT_VERSION=' deploy.sh | cut -d'"' -f2)
-          echo "📌 إصدار السكربت: v$VERSION"
-          echo "**إصدار السكربت:** v$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "📌 Script Version: v$VERSION"
+          echo "**Script Version:** v$VERSION" >> $GITHUB_STEP_SUMMARY
       
-      - name: 🚀 اختبار تنفيذ جزئي (محاكاة)
+      - name: 🚀 Dry Run Test (Simulation)
         run: |
-          # اختبار الدوال الرئيسية دون تنفيذها
+          # List main functions without executing
           grep -E '^[a-z_]+\(\)' deploy.sh | head -10
       
-      - name: 📦 تثبيت الحزم الأساسية للاختبار
+      - name: 📦 Install Test Dependencies
         run: |
           sudo apt update
           sudo apt install -y shellcheck
       
-      - name: 🔍 فحص ShellCheck
+      - name: 🔍 ShellCheck Analysis
         run: |
           shellcheck deploy.sh || true
       
-      - name: 📋 إنشاء تقرير الاختبار
+      - name: 📋 Generate Test Report
         run: |
-          echo "# ✅ تقرير اختبار Laravel Deploy Script" > test-report.md
+          echo "# ✅ Laravel Deploy Script Test Report" > test-report.md
           echo "" >> test-report.md
-          echo "## 📊 معلومات السكربت" >> test-report.md
-          echo "- **الإصدار:** $(grep 'SCRIPT_VERSION=' deploy.sh | cut -d'"' -f2)" >> test-report.md
-          echo "- **تاريخ الاختبار:** $(date)" >> test-report.md
-          echo "- **PHP الإصدار:** ${{ matrix.php-version }}" >> test-report.md
+          echo "## 📊 Script Information" >> test-report.md
+          echo "- **Version:** $(grep 'SCRIPT_VERSION=' deploy.sh | cut -d'"' -f2)" >> test-report.md
+          echo "- **Test Date:** $(date)" >> test-report.md
+          echo "- **PHP Version:** ${{ matrix.php-version }}" >> test-report.md
           echo "" >> test-report.md
-          echo "## 📈 إحصائيات" >> test-report.md
-          echo "- **عدد الأسطر:** $(wc -l < deploy.sh)" >> test-report.md
-          echo "- **عدد الدوال:** $(grep -c '^[a-z_]*()' deploy.sh)" >> test-report.md
-          echo "- **عدد الأوامر المختلفة:** $(grep -oE '^[a-z-]+' deploy.sh | sort -u | wc -l)" >> test-report.md
+          echo "## 📈 Statistics" >> test-report.md
+          echo "- **Lines:** $(wc -l < deploy.sh)" >> test-report.md
+          echo "- **Functions:** $(grep -c '^[a-z_]*()' deploy.sh)" >> test-report.md
+          echo "- **Unique Commands:** $(grep -oE '^[a-z-]+' deploy.sh | sort -u | wc -l)" >> test-report.md
           
           cat test-report.md >> $GITHUB_STEP_SUMMARY
       
-      - name: 💾 حفظ تقرير الاختبار
+      - name: 💾 Save Test Report
         uses: actions/upload-artifact@v4
         with:
           name: test-report-php-${{ matrix.php-version }}

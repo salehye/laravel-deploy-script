@@ -11,11 +11,11 @@ You can find all configuration templates in the `config/` directory:
 
 ## 🎨 Changing UI/Colors
 
-In `deploy.sh`, look for the "الألوان والأنماط" section to modify the CLI appearance.
+In `deploy.sh`, look for the "Colors and Styles" section to modify the CLI appearance.
 
 ## 🧩 Adding New Features
 
-The script is modular. You can add new functions to the "الدوال الأساسية" section and include them in the `main_menu`.
+The script is modular. You can add new functions to the core functions section and include them in the `main_menu`.
 
 ## 📦 Custom Release Paths
 

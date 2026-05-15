@@ -1,25 +1,32 @@
-# سجل التغييرات
+# Changelog
 
 ## [4.0.0] - 2024-01-15
-### إضافات
-- دعم متعدد الدومينات
+### Added
+- Multi-domain support
 - Zero Downtime Deployment
-- Webhook للنشر التلقائي
-- دعم قواعد بيانات متعددة (MySQL, PostgreSQL, MariaDB)
-- مراقبة الأداء والنسخ الاحتياطي
-- حماية متقدمة (Fail2ban, ModSecurity)
+- Webhook for auto-deploy via GitHub
+- Multiple database support (MySQL, PostgreSQL, MariaDB)
+- Performance monitoring and automated backups
+- Advanced security (Fail2Ban, ModSecurity, UFW)
+- Project editing (change PHP version, domains, .env)
+- Project deletion with full cleanup
+- Maintenance mode toggle
+- Log viewer for Nginx, PHP-FPM, and Laravel
+- Swap memory setup
+- Node.js & NPM installation
 
-### تحسينات
-- واجهة تفاعلية محسنة
-- معالجة أفضل للأخطاء
-- توثيق كامل
+### Improved
+- Enhanced interactive CLI interface
+- Better error handling and input validation
+- Complete documentation in English
+- Ubuntu 24.04 compatibility
 
 ## [3.0.0] - 2023-12-01
-### إضافات
-- دعم PHP 8.3
-- تثبيت تلقائي لـ Redis
-- تحسين الأمان
+### Added
+- PHP 8.3 support
+- Automatic Redis installation
+- Security hardening
 
-### إصلاحات
-- إصلاح مشاكل الصلاحيات
-- تحسين سرعة النشر
+### Fixed
+- Permission issues
+- Deployment speed improvements

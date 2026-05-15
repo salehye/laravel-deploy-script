@@ -1,17 +1,26 @@
-# دليل المساهمة
+# Contributing Guide
 
-نرحب بمساهماتكم! يرجى اتباع هذه الإرشادات.
+We welcome your contributions! Please follow these guidelines.
 
-## كيفية المساهمة
+## How to Contribute
 
-1. Fork المستودع
-2. إنشاء فرع جديد (`git checkout -b feature/amazing-feature`)
-3. Commit التغييرات (`git commit -m 'Add amazing feature'`)
-4. Push إلى الفرع (`git push origin feature/amazing-feature`)
-5. فتح Pull Request
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## معايير الكود
+## Code Standards
 
-- استخدم Bash coding standards
-- أضف تعليقات للدوال المهمة
-- اختبر السكربت قبل رفعه
+- Follow Bash coding standards
+- Add comments for important functions
+- Test the script before submitting
+- Use `shellcheck` to validate your scripts
+
+## Reporting Bugs
+
+Please use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) when filing issues.
+
+## Feature Requests
+
+Please use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md) for suggestions.
