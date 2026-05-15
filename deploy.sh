@@ -54,9 +54,9 @@ print_banner() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════════════════════════╗"
     echo "║                                                                           ║"
-    echo -e "║     ${WHITE}${ICON_ROCKET} LARADEPLOY PRO v${SCRIPT_VERSION} - نظام نشر Laravel الاحترافي${CYAN}                    ║"
+    echo -e "║     ${WHITE}${ICON_ROCKET} LARADEPLOY PRO v${SCRIPT_VERSION} - Professional Laravel Deploy System${CYAN}         ║"
     echo "║                                                                           ║"
-    echo -e "║     ${DIM}نشر احترافي | Zero Downtime | SSL تلقائي | حماية متقدمة${CYAN}                          ║"
+    echo -e "║     ${DIM}Zero Downtime | SSL Auto | Advanced Protection${CYAN}                           ║"
     echo "║                                                                           ║"
     echo "╚═══════════════════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -198,19 +198,19 @@ main_menu() {
     print_banner
     
     local options=(
-        "نشر مشروع Laravel جديد"
-        "تحديث مشروع موجود"
-        "تعديل إعدادات مشروع"
-        "حذف مشروع"
-        "إدارة قواعد البيانات"
-        "إعدادات الأمان"
-        "أدوات إضافية"
-        "النسخ الاحتياطي"
-        "مراقبة الأداء"
-        "الخروج"
+        "Deploy New Laravel Project"
+        "Update Existing Project"
+        "Edit Project Settings"
+        "Delete Project"
+        "Database Management"
+        "Security Settings"
+        "Additional Tools"
+        "Backup Manager"
+        "Performance Monitor"
+        "Exit"
     )
     
-    select_option "القائمة الرئيسية" "${options[@]}"
+    select_option "MAIN MENU" "${options[@]}"
     local choice=$?
     
     case $choice in
@@ -228,23 +228,23 @@ main_menu() {
 }
 
 # ============================================
-# نشر مشروع جديد
+# Deploy New Project
 # ============================================
 deploy_new_project() {
-    print_title "🚀 نشر مشروع Laravel جديد"
+    print_title "🚀 Deploy New Laravel Project"
     
-    # جمع المعلومات
+    # Information Gathering
     while true; do
-        PROJECT_NAME=$(ask_input "اسم المشروع (أحرف، أرقام، نقاط، شرطات فقط)" "")
-        # تنظيف أي مسافات زائدة ورموز غريبة
+        PROJECT_NAME=$(ask_input "Project Name (letters, numbers, dots, hyphens only)" "")
+        # Trim whitespace and strange characters
         PROJECT_NAME=$(echo "$PROJECT_NAME" | tr -d '\r' | xargs)
         
         if [[ -z "$PROJECT_NAME" ]]; then
-            print_error "اسم المشروع مطلوب"
+            print_error "Project Name is required"
         else
             case "$PROJECT_NAME" in
                 *[!a-zA-Z0-9.-]*)
-                    print_error "اسم المشروع يحتوي على رموز غير مسموح بها"
+                    print_error "Project Name contains unauthorized symbols"
                     ;;
                 *)
                     break
@@ -253,23 +253,23 @@ deploy_new_project() {
         fi
     done
     
-    # إضافة الدومينات
+    # Add Domains
     DOMAINS=()
     while true; do
-        domain=$(ask_input "أدخل اسم النطاق (مثال: example.com) - اتركه فارغاً للإنهاء" "")
+        domain=$(ask_input "Enter domain name (e.g., example.com) - leave empty to finish" "")
         [[ -z "$domain" ]] && break
         domain=$(echo "$domain" | xargs)
         
         if [[ "$domain" =~ ^([a-zA-Z0-9](-*[a-zA-Z0-9])*\.)+[a-zA-Z]{2,}$ ]]; then
             DOMAINS+=("$domain")
-            print_success "تم إضافة $domain"
+            print_success "Added $domain"
         else
-            print_error "تنسيق اسم النطاق غير صحيح"
+            print_error "Invalid domain format"
         fi
     done
     
     if [[ ${#DOMAINS[@]} -eq 0 ]]; then
-        print_error "يجب إضافة دومين واحد على الأقل"
+        print_error "At least one domain must be added"
         return 1
     fi
     
@@ -277,39 +277,39 @@ deploy_new_project() {
     PROJECT_USER="${PROJECT_NAME//[.-]/_}"
     SITE_PATH="/var/www/$PRIMARY_DOMAIN"
     
-    # اختيار الإعدادات
+    # Choose Settings
     PHP_VERSIONS=("8.3" "8.2" "8.1" "8.0")
-    select_option "اختر إصدار PHP" "${PHP_VERSIONS[@]}"
+    select_option "Choose PHP Version" "${PHP_VERSIONS[@]}"
     PHP_VERSION="${PHP_VERSIONS[$?]}"
     
-    DB_TYPES=("MySQL" "PostgreSQL" "MariaDB" "لا تثبيت")
-    select_option "اختر نوع قاعدة البيانات" "${DB_TYPES[@]}"
+    DB_TYPES=("MySQL" "PostgreSQL" "MariaDB" "No Database")
+    select_option "Choose Database Type" "${DB_TYPES[@]}"
     DB_TYPE_INDEX=$?
     DB_TYPE="${DB_TYPES[$DB_TYPE_INDEX]}"
     
-    if [[ "$DB_TYPE" != "لا تثبيت" ]]; then
-        DB_NAME=$(ask_input "اسم قاعدة البيانات" "${PROJECT_USER}_db")
-        DB_USER=$(ask_input "مستخدم قاعدة البيانات" "${PROJECT_USER}")
+    if [[ "$DB_TYPE" != "No Database" ]]; then
+        DB_NAME=$(ask_input "Database Name" "${PROJECT_USER}_db")
+        DB_USER=$(ask_input "Database User" "${PROJECT_USER}")
         DB_PASS=$(openssl rand -base64 16 | tr -d "=+/" | cut -c1-16)
     fi
     
-    GITHUB_URL=$(ask_input "رابط GitHub (SSH) - اتركه فارغاً للرفع اليدوي" "")
-    BRANCH=$(ask_input "الفرع (branch)" "main")
+    GITHUB_URL=$(ask_input "GitHub URL (SSH) - leave empty for manual upload" "")
+    BRANCH=$(ask_input "Branch" "main")
     
-    # تأكيد المعلومات
-    print_title "📋 تأكيد المعلومات"
-    echo -e "  • المشروع: ${GREEN}$PROJECT_NAME${NC}"
-    echo -e "  • الدومينات: ${GREEN}${DOMAINS[*]}${NC}"
+    # Information Confirmation
+    print_title "📋 Confirm Information"
+    echo -e "  • Project: ${GREEN}$PROJECT_NAME${NC}"
+    echo -e "  • Domains: ${GREEN}${DOMAINS[*]}${NC}"
     echo -e "  • PHP: ${GREEN}$PHP_VERSION${NC}"
-    echo -e "  • قاعدة البيانات: ${GREEN}$DB_TYPE${NC}"
+    echo -e "  • Database: ${GREEN}$DB_TYPE${NC}"
     [[ -n "$GITHUB_URL" ]] && echo -e "  • GitHub: ${GREEN}$GITHUB_URL${NC}"
     
-    if ! ask_yes_no "هل جميع المعلومات صحيحة؟" "Y"; then
-        print_error "تم إلغاء التثبيت"
+    if ! ask_yes_no "Is all information correct?" "Y"; then
+        print_error "Installation cancelled"
         return 1
     fi
     
-    # بدء التثبيت
+    # Start Installation
     install_system_packages
     install_php "$PHP_VERSION"
     install_database "$DB_TYPE" "$DB_NAME" "$DB_USER" "$DB_PASS"
@@ -326,22 +326,22 @@ deploy_new_project() {
     setup_php_fpm "$PROJECT_USER" "$PHP_VERSION" "$SITE_PATH"
     setup_nginx "$PROJECT_NAME" "${DOMAINS[@]}" "$SITE_PATH" "$PHP_VERSION" "$PROJECT_USER"
     
-    if ask_yes_no "هل تريد تثبيت SSL؟" "Y"; then
+    if ask_yes_no "Do you want to install SSL?" "Y"; then
         install_ssl "${DOMAINS[@]}"
     fi
     
-    if ask_yes_no "هل تريد تفعيل النشر التلقائي؟" "Y"; then
+    if ask_yes_no "Do you want to enable Auto-Deploy?" "Y"; then
         setup_webhook "$PROJECT_NAME" "$PRIMARY_DOMAIN" "$BRANCH" "$PHP_VERSION"
     fi
     
-    if ask_yes_no "هل تريد تفعيل Queue Worker؟" "Y"; then
+    if ask_yes_no "Do you want to enable Queue Worker (Supervisor)?" "Y"; then
         setup_supervisor "$PROJECT_NAME" "$SITE_PATH" "$PROJECT_USER"
     fi
     
     setup_cron_jobs "$PROJECT_NAME" "$SITE_PATH" "$PROJECT_USER"
     create_deploy_script "$PROJECT_NAME" "$SITE_PATH"
     
-    # حفظ معلومات المشروع للتعديل مستقبلاً
+    # Save project info for future editing
     cat > "$SITE_PATH/.deploy-info" << EOF
 PROJECT_NAME="$PROJECT_NAME"
 PRIMARY_DOMAIN="$PRIMARY_DOMAIN"
@@ -353,15 +353,15 @@ GITHUB_URL="$GITHUB_URL"
 BRANCH="$BRANCH"
 EOF
     
-    print_success "🎉 تم نشر المشروع بنجاح!"
+    print_success "🎉 Project deployed successfully!"
     echo ""
-    echo -e "${CYAN}🔗 رابط الموقع:${NC} https://$PRIMARY_DOMAIN"
-    echo -e "${CYAN}📁 مسار المشروع:${NC} $SITE_PATH"
-    echo -e "${CYAN}👤 مستخدم النظام:${NC} $PROJECT_USER"
+    echo -e "${CYAN}🔗 Site URL:${NC} https://$PRIMARY_DOMAIN"
+    echo -e "${CYAN}📁 Project Path:${NC} $SITE_PATH"
+    echo -e "${CYAN}👤 System User:${NC} $PROJECT_USER"
     
     if [[ -n "$GITHUB_URL" ]]; then
         echo ""
-        echo -e "${YELLOW}🔑 مفتاح SSH العام (أضفه في GitHub Deploy Keys):${NC}"
+        echo -e "${YELLOW}🔑 SSH Public Key (Add to GitHub Deploy Keys):${NC}"
         cat "/home/$PROJECT_USER/.ssh/id_ed25519.pub"
     fi
 }
