@@ -117,7 +117,8 @@ select_option() {
         echo -ne "  ${YELLOW}Select a number (1-${#options[@]}): ${NC}"
         read choice
         if [[ "$choice" =~ ^[0-9]+$ ]] && (( choice>=1 && choice<=${#options[@]} )); then
-            return $((choice-1))
+            SELECTED_INDEX=$((choice-1))
+            return 0
         fi
         echo -e "  ${RED}Invalid choice${NC}"
     done
@@ -576,7 +577,7 @@ extra_tools() {
         "Back"
     )
     select_option "Choose a tool" "${options[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     case $choice in
         0) toggle_maintenance ;;
         1) log_viewer ;;
@@ -595,7 +596,7 @@ toggle_maintenance() {
     done
     [[ ${#projects[@]} -eq 0 ]] && { print_error "No deployed projects found"; return; }
     select_option "Select project" "${projects[@]}"
-    local idx=$?
+    local idx=$SELECTED_INDEX
     source "${paths[$idx]}/.deploy-info"
     if sudo -u "$PROJECT_USER" php "$SITE_PATH/current/artisan" down --help >/dev/null 2>&1; then
         if ask_yes_no "Enable maintenance mode?" "Y"; then
@@ -613,7 +614,7 @@ toggle_maintenance() {
 log_viewer() {
     local options=("Nginx Access" "Nginx Error" "PHP-FPM Error" "Laravel Logs")
     select_option "Select log to view" "${options[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     case $choice in
         0) tail -n 50 /var/log/nginx/access.log ;;
         1) tail -n 50 /var/log/nginx/error.log ;;
@@ -622,7 +623,7 @@ log_viewer() {
             local projects=()
             for d in /var/www/*/; do [[ -f "$d/.deploy-info" ]] && projects+=("$(basename "$d")"); done
             select_option "Select project" "${projects[@]}"
-            local idx=$?
+            local idx=$SELECTED_INDEX
             tail -n 50 "/var/www/${projects[$idx]}/logs/php-error.log"
             ;;
     esac
@@ -668,7 +669,7 @@ security_settings() {
         "Back"
     )
     select_option "Choose a security option" "${options[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     case $choice in
         0) setup_fail2ban ;;
         1) setup_modsecurity ;;
@@ -755,16 +756,16 @@ edit_existing_project() {
     done
     [[ ${#projects[@]} -eq 0 ]] && { print_error "No projects found"; return; }
     select_option "Select project" "${projects[@]}"
-    local idx=$?
+    local idx=$SELECTED_INDEX
     source "${paths[$idx]}/.deploy-info"
     local edit_opts=("Change PHP version" "Edit domains" "Edit .env file" "Back")
     select_option "What would you like to edit?" "${edit_opts[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     case $choice in
         0) # Change PHP
             local php_versions=("8.3" "8.2" "8.1" "8.0")
             select_option "Select new PHP version" "${php_versions[@]}"
-            local new_php=${php_versions[$?]}
+            local new_php=${php_versions[$SELECTED_INDEX]}
             install_php "$new_php"
             setup_php_fpm "$PROJECT_USER" "$new_php" "$SITE_PATH"
             setup_nginx "$PROJECT_NAME" "${DOMAINS[@]}" "$SITE_PATH" "$new_php" "$PROJECT_USER"
@@ -818,7 +819,7 @@ delete_project() {
     done
     [[ ${#projects[@]} -eq 0 ]] && { print_error "No projects installed"; return; }
     select_option "Select project to delete" "${projects[@]}"
-    local idx=$?
+    local idx=$SELECTED_INDEX
     source "${paths[$idx]}/.deploy-info"
     echo -e "${RED}${BOLD}⚠️ WARNING: This will permanently delete the project and its database!${NC}"
     if ask_yes_no "Are you absolutely sure you want to delete $PROJECT_NAME?" "N"; then
@@ -863,7 +864,7 @@ main_menu() {
         "Exit"
     )
     select_option "MAIN MENU" "${options[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     case $choice in
         0) deploy_new_project ;;
         1) update_existing_project ;;
@@ -928,11 +929,11 @@ deploy_new_project() {
     # Choose Settings
     PHP_VERSIONS=("8.3" "8.2" "8.1" "8.0")
     select_option "Choose PHP Version" "${PHP_VERSIONS[@]}"
-    PHP_VERSION="${PHP_VERSIONS[$?]}"
+    PHP_VERSION="${PHP_VERSIONS[$SELECTED_INDEX]}"
     
     DB_TYPES=("MySQL" "PostgreSQL" "MariaDB" "No Database")
     select_option "Choose Database Type" "${DB_TYPES[@]}"
-    DB_TYPE_INDEX=$?
+    DB_TYPE_INDEX=$SELECTED_INDEX
     DB_TYPE="${DB_TYPES[$DB_TYPE_INDEX]}"
     
     if [[ "$DB_TYPE" != "No Database" ]]; then
@@ -1034,7 +1035,7 @@ update_existing_project() {
     fi
     
     select_option "Select project to update" "${projects[@]}"
-    local project_index=$?
+    local project_index=$SELECTED_INDEX
     local selected_project="${projects[$project_index]}"
     local project_name=$(echo "$selected_project" | cut -d' ' -f1)
     
@@ -1060,7 +1061,7 @@ manage_databases() {
     )
     
     select_option "Choose operation" "${options[@]}"
-    local choice=$?
+    local choice=$SELECTED_INDEX
     
     case $choice in
         0) create_database ;;
