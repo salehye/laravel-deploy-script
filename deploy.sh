@@ -103,7 +103,9 @@ ask_input() {
     else
         echo -ne "  ${BLUE}📝${NC} $prompt: "
     fi
-    read answer
+    read -r answer
+    # تنظيف المسافات ورموز Carriage Return
+    answer=$(echo "$answer" | tr -d '\r' | xargs)
     echo "${answer:-$default}"
 }
 
@@ -234,15 +236,20 @@ deploy_new_project() {
     # جمع المعلومات
     while true; do
         PROJECT_NAME=$(ask_input "اسم المشروع (أحرف، أرقام، نقاط، شرطات فقط)" "")
-        # تنظيف أي مسافات زائدة
-        PROJECT_NAME=$(echo "$PROJECT_NAME" | xargs)
+        # تنظيف أي مسافات زائدة ورموز غريبة
+        PROJECT_NAME=$(echo "$PROJECT_NAME" | tr -d '\r' | xargs)
         
         if [[ -z "$PROJECT_NAME" ]]; then
             print_error "اسم المشروع مطلوب"
-        elif [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9.-]+$ ]]; then
-            print_error "اسم المشروع يحتوي على رموز غير مسموح بها"
         else
-            break
+            case "$PROJECT_NAME" in
+                *[!a-zA-Z0-9.-]*)
+                    print_error "اسم المشروع يحتوي على رموز غير مسموح بها"
+                    ;;
+                *)
+                    break
+                    ;;
+            esac
         fi
     done
     
